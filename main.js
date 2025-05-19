@@ -1,26 +1,28 @@
 // El input sera el nameId + hashtag
 // Utilizaremos las llamadas de blitz.gg
 
-async function main() {
-  // const rawData = await fetchQueueData('EUW1', 'marquesafanacc', 'EUW');
-  // const rawData = await fetchQueueData('EUW1', 'TheNameIsMartin', 'HAHAH');// With all ranks
-  const initialData = {
-    timeStamp: new Date().toISOString(),
-    region: 'EUW1',
-    nameId: 'Goosy',
-    hashtag: '2828',
-    fetchedData: null,
-    hasFetched: false,
-    errorMessage: null,
-  };
-  const data = await fetchSummonerData(
-    initialData.region,
-    initialData.nameId,
-    initialData.hashtag
-  );
-
-  console.log(data);
-
+async function main(accounts) {
+  if (!Array.isArray(accounts) || accounts.length === 0) {
+    throw new Error('Please provide an array of accounts with region, nameId, and hashtag');
+  }
+  const results = [];
+  for (const account of accounts) {
+    const { region, nameId, hashtag } = account;
+    try {
+      const data = await fetchSummonerData(region, nameId, hashtag);
+      results.push(data);
+    } catch (error) {
+      console.error(`Error fetching data for ${nameId}#${hashtag}:`, error);
+      results.push({
+        region,
+        nameId,
+        hashtag,
+        errorMessage: error.message,
+      });
+    }
+  }
+  console.log('Results:', results);
+  return results;
   var temp = 1;
 }
 
@@ -28,6 +30,7 @@ const fetchQueueData = async (region, nameId, hashtag) => {
   if (!region || !nameId || !hashtag) {
     throw new Error('Missing required parameters: region, nameId, or hashtag');
   }
+  region = region.toUpperCase();
   const translateRegions = {
     EUW1: ['EUW', 'Europe West'],
   };
@@ -41,7 +44,7 @@ const fetchQueueData = async (region, nameId, hashtag) => {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`Error fetching data: ${response.statusText}`);
+    throw new Error(`Error fetching summoner data for ${nameId}#${hashtag} - region:${region}. Message: ${response.statusText}`);
   }
 
   const data = await response.json();
@@ -94,15 +97,50 @@ const extractQueueData = (data) => {
   return result;
 };
 
+// fetchSummonerData('EUW1', 'marquesafanacc', 'EUW'); // Only solo queue
+// fetchSummonerData('EUW1', 'TheNameIsMartin', 'HAHAH');// With all ranks
+// fetchSummonerData('EUW1', 'Goosy', '2828'); // Any ranks
+// fetchSummonerData('EUW1', 'Goosy', '123123122828'); // Hashtag does not exist
 const fetchSummonerData = async (region, nameId, hashtag) => {
+  const initialData = {
+    timeStamp: new Date().toISOString(),
+    region,
+    nameId,
+    hashtag,
+    fetchedData: null,
+    hasFetched: false,
+    errorMessage: null,
+  };
   if (!region || !nameId || !hashtag) {
     throw new Error('Missing required parameters: region, nameId, or hashtag');
   }
-  const rawData = await fetchQueueData(region, nameId, hashtag);
 
+  const rawData = await fetchQueueData(
+    initialData.region,
+    initialData.nameId,
+    initialData.hashtag
+  ).catch((error) => {
+    initialData.errorMessage = error.message;
+    console.error(
+      `Error fetching summoner data (${nameId}#${hashtag} at region ${region}):`,
+      error
+    );
+    return initialData;
+  });
+  initialData.hasFetched = true;
+  
   const data = extractQueueData(rawData);
+  initialData.fetchedData = data;
 
   return data;
 };
 
-main();
+
+const multipleAccounts = [
+  { region: 'EUW1', nameId: 'marquesafanacc', hashtag: 'EUW' },
+  { region: 'EUW1', nameId: 'TheNameIsMartin', hashtag: 'HAHAH' },
+  { region: 'EUW1', nameId: 'Goosy', hashtag: '2828' },
+  { region: 'EUW1', nameId: 'Goosy', hashtag: '123123122828' }, // Hashtag does not exist
+]
+
+main(multipleAccounts)
