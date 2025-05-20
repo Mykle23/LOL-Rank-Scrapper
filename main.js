@@ -3,7 +3,9 @@
 
 async function main(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) {
-    throw new Error('Please provide an array of accounts with region, nameId, and hashtag');
+    throw new Error(
+      "Please provide an array of accounts with region, nameId, and hashtag"
+    );
   }
   const results = [];
   for (const account of accounts) {
@@ -21,18 +23,18 @@ async function main(accounts) {
       });
     }
   }
-  console.log('Results:', results);
+  console.log("Results:", results);
   return results;
   var temp = 1;
 }
 
 const fetchQueueData = async (region, nameId, hashtag) => {
   if (!region || !nameId || !hashtag) {
-    throw new Error('Missing required parameters: region, nameId, or hashtag');
+    throw new Error("Missing required parameters: region, nameId, or hashtag");
   }
   region = region.toUpperCase();
   const translateRegions = {
-    EUW1: ['EUW', 'Europe West'],
+    EUW1: ["EUW", "Europe West"],
   };
   // Buscamos por propiedad de transalteRegions
   const translatedRegion = Object.keys(translateRegions).find((key) =>
@@ -44,7 +46,9 @@ const fetchQueueData = async (region, nameId, hashtag) => {
   const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`Error fetching summoner data for ${nameId}#${hashtag} - region:${region}. Message: ${response.statusText}`);
+    throw new Error(
+      `Error fetching summoner data for ${nameId}#${hashtag} - region:${region}. Message: ${response.statusText}`
+    );
   }
 
   const data = await response.json();
@@ -53,17 +57,17 @@ const fetchQueueData = async (region, nameId, hashtag) => {
 
 const extractQueueData = (data) => {
   const queueDefaultData = {
-    tier: 'Unranked',
-    rank: 'Unranked',
+    tier: "Unranked",
+    rank: "Unranked",
     leaguePoints: 0,
     wins: 0,
     losses: 0,
   };
   const result = {
     summonerData: {
-      name: data.account.game_name || '',
-      summonerId: data.account.puuid || '',
-      hashtag: data.account.tag_line || '',
+      name: data.account.game_name || "",
+      summonerId: data.account.puuid || "",
+      hashtag: data.account.tag_line || "",
       summonerLevel: data.summoner.summoner_level || 0,
     },
     queueData: {
@@ -76,18 +80,18 @@ const extractQueueData = (data) => {
     return result; // No league data available
   }
   data.league_lol.forEach((queue) => {
-    if (queue.queue_type === 'RANKED_SOLO_5x5') {
+    if (queue.queue_type === "RANKED_SOLO_5x5") {
       result.queueData.soloQueue = {
-        tier: queue.tier || 'Unranked',
-        rank: queue.rank || 'Unranked',
+        tier: queue.tier || "Unranked",
+        rank: queue.rank || "Unranked",
         leaguePoints: queue.league_points || 0,
         wins: queue.wins || 0,
         losses: queue.losses || 0,
       };
-    } else if (queue.queue_type === 'RANKED_FLEX_SR') {
+    } else if (queue.queue_type === "RANKED_FLEX_SR") {
       result.queueData.flexQueue = {
-        tier: queue.tier || 'Unranked',
-        rank: queue.rank || 'Unranked',
+        tier: queue.tier || "Unranked",
+        rank: queue.rank || "Unranked",
         leaguePoints: queue.league_points || 0,
         wins: queue.wins || 0,
         losses: queue.losses || 0,
@@ -112,7 +116,7 @@ const fetchSummonerData = async (region, nameId, hashtag) => {
     errorMessage: null,
   };
   if (!region || !nameId || !hashtag) {
-    throw new Error('Missing required parameters: region, nameId, or hashtag');
+    throw new Error("Missing required parameters: region, nameId, or hashtag");
   }
 
   const rawData = await fetchQueueData(
@@ -128,19 +132,20 @@ const fetchSummonerData = async (region, nameId, hashtag) => {
     return initialData;
   });
   initialData.hasFetched = true;
-  
+
   const data = extractQueueData(rawData);
   initialData.fetchedData = data;
 
   return data;
 };
 
-
 const multipleAccounts = [
-  { region: 'EUW1', nameId: 'marquesafanacc', hashtag: 'EUW' },
-  { region: 'EUW1', nameId: 'TheNameIsMartin', hashtag: 'HAHAH' },
-  { region: 'EUW1', nameId: 'Goosy', hashtag: '2828' },
-  { region: 'EUW1', nameId: 'Goosy', hashtag: '123123122828' }, // Hashtag does not exist
-]
+  { region: "EUW1", nameId: "marquesafanacc", hashtag: "EUW" },
+  { region: "EUW1", nameId: "TheNameIsMartin", hashtag: "HAHAH" },
+  { region: "EUW1", nameId: "Goosy", hashtag: "2828" },
+  { region: "EUW1", nameId: "Goosy", hashtag: "123123122828" }, // Hashtag does not exist
+];
 
-main(multipleAccounts)
+main(multipleAccounts);
+
+export { main, fetchQueueData, extractQueueData, fetchSummonerData };
