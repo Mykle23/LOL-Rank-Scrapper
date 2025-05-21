@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "main": "node main.js",
+    "run": "node run.js",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui"

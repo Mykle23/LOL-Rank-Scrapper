@@ -1,5 +1,3 @@
-// main.js
-
 async function main(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) {
     throw new Error(
@@ -128,19 +126,13 @@ const fetchSummonerData = async (region, nameId, hashtag) => {
     });
 
   initialData.hasFetched = true;
+  if (rawData.errorMessage) {
+    return rawData;
+  }
   const data = mod.extractQueueData(rawData);
   initialData.fetchedData = data;
 
   return data;
 };
-
-const multipleAccounts = [
-  { region: "EUW1", nameId: "marquesafanacc", hashtag: "EUW" },
-  { region: "EUW1", nameId: "TheNameIsMartin", hashtag: "HAHAH" },
-  { region: "EUW1", nameId: "Goosy", hashtag: "2828" },
-  { region: "EUW1", nameId: "Goosy", hashtag: "123123122828" },
-];
-
-// main(multipleAccounts);
 
 export { main, fetchQueueData, extractQueueData, fetchSummonerData };
