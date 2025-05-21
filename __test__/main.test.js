@@ -1,16 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  main,
-  fetchQueueData,
-  extractQueueData,
-  fetchSummonerData,
-} from "../main";
-import { fetchQueueData as mockedFetchQueueData } from "../main";
-import { sampleRawDataWithQueues, sampleRawDataNoLeague } from "./mockData.js";
-// Mock global fetch
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import * as mainModule from "../main";
+import { sampleRawDataNoLeague, sampleRawDataWithQueues } from "./mockData.js";
+
+const { main } = mainModule;
+
+// Mock global fetch for fetchQueueData tests
 global.fetch = vi.fn();
 
 describe("fetchQueueData", () => {
+  const { fetchQueueData } = mainModule;
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -22,7 +20,7 @@ describe("fetchQueueData", () => {
   });
 
   it("normalizes region aliases and fetches data", async () => {
-    const mockJson = { ok: true, data: {} };
+    const mockJson = { foo: "bar" };
     fetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve(mockJson),
@@ -41,8 +39,8 @@ describe("fetchQueueData", () => {
     expect(data2).toEqual(mockJson);
   });
 
-  it("normalizes region aliases if not in dictionary translateRegion and fetches data", async () => {
-    const mockJson = { ok: true, data: {} };
+  it("uses region as-is if not alias", async () => {
+    const mockJson = { baz: "qux" };
     fetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(mockJson),
@@ -54,6 +52,7 @@ describe("fetchQueueData", () => {
     );
     expect(data).toEqual(mockJson);
   });
+
   it("throws on non-ok response", async () => {
     fetch.mockResolvedValueOnce({ ok: false, statusText: "Not Found" });
     await expect(fetchQueueData("EUW1", "name", "tag")).rejects.toThrow(
@@ -61,7 +60,10 @@ describe("fetchQueueData", () => {
     );
   });
 });
+
 describe("extractQueueData", () => {
+  const { extractQueueData } = mainModule;
+
   it("returns default unranked data when league_lol is null", () => {
     const result = extractQueueData(sampleRawDataNoLeague);
     expect(result).toEqual({
@@ -119,59 +121,73 @@ describe("extractQueueData", () => {
   });
 });
 
-// Mock fetchQueueData in fetchSummonerData tests
-vi.mock("../main.js", async () => {
-  const actual = await vi.importActual("../main.js");
-  return {
-    ...actual,
-    fetchQueueData: vi.fn(),
-  };
-});
-
 describe("fetchSummonerData", () => {
+  const { fetchSummonerData } = mainModule;
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("throws if parameters are missing", async () => {
-    await expect(fetchSummonerData("", "", "")).rejects.toThrow(
+  it("throws if required parameters are missing", async () => {
+    await expect(fetchSummonerData("", "foo", "bar")).rejects.toThrow(
       "Missing required parameters: region, nameId, or hashtag"
     );
   });
 
-  it("returns structured data on successful fetch", async () => {
-    mockedFetchQueueData.mockResolvedValueOnce(sampleRawDataWithQueues);
+  it("returns extracted data when fetchQueueData succeeds", async () => {
+    const raw = { account: {}, summoner: {}, league_lol: null };
+    const extracted = { foo: "bar" };
+    vi.spyOn(mainModule, "fetchQueueData").mockResolvedValue(raw);
+    vi.spyOn(mainModule, "extractQueueData").mockReturnValue(extracted);
 
     const result = await fetchSummonerData("EUW1", "name", "tag");
-    expect(mockedFetchQueueData).toHaveBeenCalledWith("EUW1", "name", "tag");
-    expect(result.queueData.soloQueue.tier).toBe("GOLD");
+    expect(mainModule.extractQueueData).toHaveBeenCalledWith(raw);
+    expect(result).toBe(extracted);
   });
 
-  it("catches fetch errors and returns initial data on error", async () => {
-    const error = new Error("network failure");
-    mockedFetchQueueData.mockRejectedValueOnce(error);
+  it("handles fetchQueueData errors and logs errorMessage on initialData", async () => {
+    const err = new Error("network failure");
+    vi.spyOn(mainModule, "fetchQueueData").mockRejectedValue(err);
+    const extractSpy = vi.spyOn(mainModule, "extractQueueData");
 
-    await expect(fetchSummonerData("EUW1", "name", "tag")).resolves.toEqual(
-      expect.objectContaining({ tier: undefined })
-    );
+    const result = await fetchSummonerData("EUW1", "name", "tag");
+    expect(extractSpy).toHaveBeenCalled();
+    expect(result).toBe(extractSpy.mock.results[0].value);
   });
 });
 
 describe("main", () => {
-  it("throws if input is invalid", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("throws if accounts is not a non-empty array", async () => {
     await expect(main(null)).rejects.toThrow(
+      "Please provide an array of accounts with region, nameId, and hashtag"
+    );
+    await expect(main([])).rejects.toThrow(
       "Please provide an array of accounts with region, nameId, and hashtag"
     );
   });
 
-  it("returns results array for multiple accounts", async () => {
-    mockedFetchQueueData.mockResolvedValue(sampleRawDataNoLeague);
+  it("returns results array on mixed success and failure", async () => {
     const accounts = [
-      { region: "EUW1", nameId: "a", hashtag: "b" },
-      { region: "NA1", nameId: "c", hashtag: "d" },
+      { region: "R1", nameId: "ok", hashtag: "#1" },
+      { region: "R2", nameId: "err", hashtag: "#2" },
     ];
+    const dataSuccess = { data: 123 };
+    const errorMsg = "fail fetch";
+
+    vi.spyOn(mainModule, "fetchSummonerData").mockImplementation(
+      (_, nameId) => {
+        if (nameId === "err") throw new Error(errorMsg);
+        return Promise.resolve(dataSuccess);
+      }
+    );
+
     const results = await main(accounts);
-    expect(results).toHaveLength(2);
-    expect(results[0].summonerData.name).toBe("TestPlayer");
+    expect(results).toEqual([
+      dataSuccess,
+      { region: "R2", nameId: "err", hashtag: "#2", errorMessage: errorMsg },
+    ]);
   });
 });

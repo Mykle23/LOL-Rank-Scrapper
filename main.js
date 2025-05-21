@@ -1,5 +1,4 @@
-// El input sera el nameId + hashtag
-// Utilizaremos las llamadas de blitz.gg
+// main.js
 
 async function main(accounts) {
   if (!Array.isArray(accounts) || accounts.length === 0) {
@@ -11,7 +10,9 @@ async function main(accounts) {
   for (const account of accounts) {
     const { region, nameId, hashtag } = account;
     try {
-      const data = await fetchSummonerData(region, nameId, hashtag);
+      // Import dinámico para que Vitest pueda espiar fetchSummonerData
+      const mod = await import("./main.js");
+      const data = await mod.fetchSummonerData(region, nameId, hashtag);
       results.push(data);
     } catch (error) {
       console.error(`Error fetching data for ${nameId}#${hashtag}:`, error);
@@ -25,7 +26,6 @@ async function main(accounts) {
   }
   console.log("Results:", results);
   return results;
-  var temp = 1;
 }
 
 const fetchQueueData = async (region, nameId, hashtag) => {
@@ -36,7 +36,6 @@ const fetchQueueData = async (region, nameId, hashtag) => {
   const translateRegions = {
     EUW1: ["EUW", "Europe West"],
   };
-  // Buscamos por propiedad de transalteRegions
   const translatedRegion = Object.keys(translateRegions).find((key) =>
     translateRegions[key].includes(region)
   );
@@ -51,8 +50,7 @@ const fetchQueueData = async (region, nameId, hashtag) => {
     );
   }
 
-  const data = await response.json();
-  return data;
+  return response.json();
 };
 
 const extractQueueData = (data) => {
@@ -75,9 +73,8 @@ const extractQueueData = (data) => {
       flexQueue: queueDefaultData,
     },
   };
-  // Comprobamos si tenemos clasificacion en league_lol, ya que puede ser null
   if (!data.league_lol) {
-    return result; // No league data available
+    return result;
   }
   data.league_lol.forEach((queue) => {
     if (queue.queue_type === "RANKED_SOLO_5x5") {
@@ -101,11 +98,14 @@ const extractQueueData = (data) => {
   return result;
 };
 
-// fetchSummonerData('EUW1', 'marquesafanacc', 'EUW'); // Only solo queue
-// fetchSummonerData('EUW1', 'TheNameIsMartin', 'HAHAH');// With all ranks
-// fetchSummonerData('EUW1', 'Goosy', '2828'); // Any ranks
-// fetchSummonerData('EUW1', 'Goosy', '123123122828'); // Hashtag does not exist
 const fetchSummonerData = async (region, nameId, hashtag) => {
+  // Import dinámico para que Vitest pueda espiar fetchQueueData y extractQueueData
+  const mod = await import("./main.js");
+
+  if (!region || !nameId || !hashtag) {
+    throw new Error("Missing required parameters: region, nameId, or hashtag");
+  }
+
   const initialData = {
     timeStamp: new Date().toISOString(),
     region,
@@ -115,25 +115,20 @@ const fetchSummonerData = async (region, nameId, hashtag) => {
     hasFetched: false,
     errorMessage: null,
   };
-  if (!region || !nameId || !hashtag) {
-    throw new Error("Missing required parameters: region, nameId, or hashtag");
-  }
 
-  const rawData = await fetchQueueData(
-    initialData.region,
-    initialData.nameId,
-    initialData.hashtag
-  ).catch((error) => {
-    initialData.errorMessage = error.message;
-    console.error(
-      `Error fetching summoner data (${nameId}#${hashtag} at region ${region}):`,
-      error
-    );
-    return initialData;
-  });
+  const rawData = await mod
+    .fetchQueueData(region, nameId, hashtag)
+    .catch((error) => {
+      initialData.errorMessage = error.message;
+      console.error(
+        `Error fetching summoner data (${nameId}#${hashtag} at region ${region}):`,
+        error
+      );
+      return initialData;
+    });
+
   initialData.hasFetched = true;
-
-  const data = extractQueueData(rawData);
+  const data = mod.extractQueueData(rawData);
   initialData.fetchedData = data;
 
   return data;
@@ -143,9 +138,9 @@ const multipleAccounts = [
   { region: "EUW1", nameId: "marquesafanacc", hashtag: "EUW" },
   { region: "EUW1", nameId: "TheNameIsMartin", hashtag: "HAHAH" },
   { region: "EUW1", nameId: "Goosy", hashtag: "2828" },
-  { region: "EUW1", nameId: "Goosy", hashtag: "123123122828" }, // Hashtag does not exist
+  { region: "EUW1", nameId: "Goosy", hashtag: "123123122828" },
 ];
 
-main(multipleAccounts);
+// main(multipleAccounts);
 
 export { main, fetchQueueData, extractQueueData, fetchSummonerData };
