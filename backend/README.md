@@ -1,54 +1,159 @@
-# React + TypeScript + Vite
+# League of Legends Account Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A dashboard for managing League of Legends accounts with features for tracking ranks, roles, and performance.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Display account information with rank images
+- Region labels with full names on hover
+- Role icons with visual indicators
+- Interactive username copying
+- Account locking functionality
+- Performance tracking
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Install dependencies:
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. Add rank images:
+Place rank images in the `public/ranks` directory with the following naming convention:
+- iron.png
+- bronze.png
+- silver.png
+- gold.png
+- platinum.png
+- diamond.png
+- master.png
+- grandmaster.png
+- challenger.png
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+3. Start the development server:
+```bash
+npm start
 ```
+
+## Project Structure
+
+- `/src/components/AccountTable` - Main table component
+- `/public/ranks` - League rank images
+- `/src/types` - TypeScript type definitions
+- `/src/mocks` - Mock data for development
+
+## Dependencies
+
+- React Icons
+- React Router
+- Tailwind CSS
+
+## Notes
+
+- Rank images should be in PNG format
+- Role icons are provided through React Icons
+- Region labels include full names on hover
+- Username copying includes visual feedback
+
+## Tech Stack
+
+- React 19
+- TypeScript 5
+- TailwindCSS 3
+- Vite 6
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd lol-account-dashboard
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The application will be available at `http://localhost:5173`.
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+
+## Project Structure
+
+```
+src/
+├── components/         # React components
+│   ├── AccountTable/  # Main account table component
+│   ├── ChampionDrawer/# Champion details drawer
+│   ├── LegendDrawer/  # Activity legend drawer
+│   ├── Toast/         # Toast notifications
+│   └── Header.tsx     # App header
+├── types/             # TypeScript type definitions
+├── mocks/             # Mock data for development
+└── App.tsx           # Main application component
+```
+
+## Features
+
+### Account Table
+- Sort by region
+- Copy account credentials
+- Toggle account lock status
+- View champion performance
+- Track LP changes
+
+### Activity Calendar
+- 4-month view
+- Color-coded LP changes
+- Hover tooltips with details
+
+### Champion Performance
+- Win rate visualization
+- Games played tracking
+- Quick access to stats
+
+## Accessibility
+
+- WCAG 2.1 AA compliant
+- Keyboard navigation
+- Screen reader support
+- Focus management
+- Proper ARIA attributes
+
+## Performance
+
+- Lazy-loaded images
+- Code splitting
+- Optimized bundle size
+- Efficient re-renders
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## License
+
+MIT
+https://bejewelled-meringue-0ac95f.netlify.app/
