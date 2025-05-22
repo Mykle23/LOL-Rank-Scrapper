@@ -2,6 +2,7 @@
   "name": "lol-rank-scrapper",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "main": "node main.js",
     "run": "node run.js",
